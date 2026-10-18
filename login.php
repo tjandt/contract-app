@@ -1,7 +1,5 @@
 <?php
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/bootstrap.php';
 
 if (is_logged_in()) {
     header('Location: index.php');
@@ -34,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Anmelden – <?= htmlspecialchars(APP_NAME) ?></title>
 <link rel="stylesheet" href="<?= e(asset_url('assets/css/style.css')) ?>">
+<link rel="icon" href="data:,">
 </head>
 <body class="login-body">
     <div class="login-card">

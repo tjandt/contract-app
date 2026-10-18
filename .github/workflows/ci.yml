@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -proot" --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      VERTRAEGE_DB_HOST: 127.0.0.1
+      VERTRAEGE_DB_USER: root
+      VERTRAEGE_DB_PASS: root
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql, mbstring, fileinfo
+      - name: Syntax-Check
+        run: find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l > /dev/null
+      - name: Unit-Tests (Domain-Logik)
+        run: php tests/run.php
+      - name: Schema (Migrationen = db.sql)
+        run: MYSQL="mysql -h127.0.0.1 -uroot -proot" tests/schema_check.sh

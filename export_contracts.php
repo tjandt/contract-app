@@ -1,7 +1,5 @@
 <?php
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/bootstrap.php';
 require_login();
 
 $pdo = get_pdo();
@@ -15,8 +13,8 @@ $contracts = $stmt->fetchAll();
 $header = [
     'Vertragsname', 'Kategorie', 'Anbieter', 'Anbieter-Link', 'Vertragsnummer',
     'Status', 'Vertragsbeginn', 'Erstlaufzeit (Monate)', 'Verlängerung (Monate)',
-    'Kündigungsfrist (Tage)', 'Kosten', 'Abrechnungszyklus', 'Kosten mtl. umgerechnet',
-    'Gekündigt zum', 'Notizen',
+    'Kündigungsfrist', 'Vertragsende', 'Kosten', 'Abrechnungszyklus', 'Abbuchungsanker', 'Kosten mtl. umgerechnet',
+    'Kündigung eingereicht am', 'Kündigung bestätigt am', 'Gekündigt zum', 'Notizen',
 ];
 
 $rows = [];
@@ -31,10 +29,14 @@ foreach ($contracts as $c) {
         format_date_de($c['start_date']),
         $c['initial_term_months'],
         $c['renewal_term_months'],
-        $c['notice_period_days'],
+        notice_label($c),
+        end_alignment_label($c['end_alignment']),
         csv_amount((float) $c['current_cost']),
         cycle_label($c['billing_cycle']),
+        $c['billing_anchor_date'] ? format_date_de($c['billing_anchor_date']) : '',
         csv_amount(to_monthly_amount((float) $c['current_cost'], $c['billing_cycle'])),
+        $c['cancellation_submitted_at'] ? format_date_de($c['cancellation_submitted_at']) : '',
+        $c['cancellation_confirmed_at'] ? format_date_de($c['cancellation_confirmed_at']) : '',
         $c['cancelled_at'] ? format_date_de($c['cancelled_at']) : '',
         $c['notes'] ?? '',
     ];

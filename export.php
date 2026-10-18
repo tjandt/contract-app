@@ -1,7 +1,5 @@
 <?php
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/bootstrap.php';
 require_login();
 
 $pdo = get_pdo();
@@ -45,11 +43,17 @@ require __DIR__ . '/includes/header.php';
         <div class="export-icon">🧾</div>
         <div class="section-title">Jahresübersicht (Steuerunterlagen)</div>
         <p class="text-secondary" style="font-size:13.5px; margin:0 0 16px;">
-            Tatsächliche Kosten je Vertrag, summiert pro Kalenderjahr – auf Basis der
-            jeweils gültigen Preise aus der Kostenhistorie. Ideal für die Steuererklärung
-            oder einen Jahresüberblick.
+            Kosten je Vertrag, summiert pro Kalenderjahr – auf Basis der jeweils gültigen Preise aus der
+            Kostenhistorie. Im laufenden Jahr zählen nur die bereits angefangenen Monate.
         </p>
         <form method="get" action="export_yearly.php">
+            <div class="form-field" style="margin-bottom:14px;">
+                <label for="basis">Berechnungsgrundlage</label>
+                <select id="basis" name="basis">
+                    <option value="accrual">Periodisiert (Kosten je Monat; Jahres-/Quartalsbeiträge verteilt)</option>
+                    <option value="cash">Tatsächliche Abbuchungen (laut Zahlungskalender)</option>
+                </select>
+            </div>
             <div class="form-field" style="margin-bottom:14px;">
                 <label for="year">Jahr</label>
                 <select id="year" name="year">

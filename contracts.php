@@ -1,7 +1,5 @@
 <?php
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/bootstrap.php';
 require_login();
 
 $pdo = get_pdo();
@@ -14,8 +12,11 @@ $where = [];
 $params = [];
 
 if ($q !== '') {
-    $where[] = "(c.name LIKE :q OR c.provider_name LIKE :q OR c.contract_number LIKE :q OR c.notes LIKE :q)";
-    $params['q'] = '%' . $q . '%';
+    // Mit echten Prepared Statements darf ein benannter Parameter nur einmal vorkommen -> je Spalte ein eigener
+    // Platzhalter. LIKE-Sonderzeichen (% _) in der Eingabe werden maskiert.
+    $like = '%' . addcslashes($q, '%_\\') . '%';
+    $where[] = "(c.name LIKE :q1 OR c.provider_name LIKE :q2 OR c.contract_number LIKE :q3 OR c.notes LIKE :q4)";
+    $params += ['q1' => $like, 'q2' => $like, 'q3' => $like, 'q4' => $like];
 }
 if ($categoryId !== '') {
     $where[] = "c.category_id = :cat";
@@ -23,7 +24,7 @@ if ($categoryId !== '') {
 }
 switch ($status) {
     case 'running': // laufend: aktiv oder bereits gekündigt, aber noch nicht beendet
-        $where[] = "c.status != 'paused' AND (c.cancelled_at IS NULL OR c.cancelled_at >= CURDATE())";
+        $where[] = SQL_NOT_ENDED;
         break;
     case 'paused':
         $where[] = "c.status = 'paused'";
@@ -42,7 +43,7 @@ $sql = "SELECT c.*, cat.name AS category_name, cat.color_hex, cat.icon
 if ($where) {
     $sql .= " WHERE " . implode(' AND ', $where);
 }
-$sql .= " ORDER BY (c.status != 'paused' AND (c.cancelled_at IS NULL OR c.cancelled_at >= CURDATE())) DESC, c.name ASC";
+$sql .= " ORDER BY (" . SQL_NOT_ENDED . ") DESC, c.name ASC";
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
@@ -50,7 +51,7 @@ $contracts = $stmt->fetchAll();
 
 foreach ($contracts as &$c) {
     $c['deadline_info'] = calculate_contract_deadline($c);
-    $c['urgency'] = deadline_urgency($c['deadline_info']['days_left']);
+    $c['urgency'] = deadline_urgency($c['deadline_info']['days_left'], REMINDER_WARN_DAYS, REMINDER_URGENT_DAYS);
     $c['monthly_equivalent'] = to_monthly_amount((float) $c['current_cost'], $c['billing_cycle']);
 }
 unset($c);
@@ -102,7 +103,9 @@ require __DIR__ . '/includes/header.php';
 <div class="page-head">
     <div>
         <h1>Verträge</h1>
-        <p><?= count($contracts) ?> Ergebnis<?= count($contracts) === 1 ? '' : 'se' ?></p>
+        <p><?= count($contracts) ?> Ergebnis<?= count($contracts) === 1 ? '' : 'se' ?><?php
+            $shownTotal = array_sum(array_map(fn($c) => is_contract_running($c) && $c['start_date'] <= date('Y-m-d') ? $c['monthly_equivalent'] : 0, $contracts));
+            if ($shownTotal > 0): ?> · laufende Kosten dieser Auswahl: <?= format_eur($shownTotal) ?> / Monat<?php endif; ?></p>
     </div>
     <a href="contract_edit.php" class="btn btn-primary">+ Neuer Vertrag</a>
 </div>
@@ -149,12 +152,10 @@ require __DIR__ . '/includes/header.php';
         <?php if (empty($contracts)): ?>
         <tr><td colspan="6"><div class="empty-state">Keine Verträge gefunden.</div></td></tr>
         <?php endif; ?>
-        <?php foreach ($contracts as $c):
-            $d = $c['deadline_info'];
-        ?>
+        <?php foreach ($contracts as $c): ?>
         <tr onclick="window.location='contract_view.php?id=<?= (int)$c['id'] ?>'" style="cursor:pointer;">
             <td data-label="Vertrag" class="name-cell">
-                <div class="contract-name"><?= e($c['name']) ?></div>
+                <a class="contract-name" href="contract_view.php?id=<?= (int) $c['id'] ?>"><?= e($c['name']) ?></a>
                 <?php if ($c['provider_name']): ?><div class="provider"><?= e($c['provider_name']) ?></div><?php endif; ?>
             </td>
             <td data-label="Kategorie">
@@ -175,15 +176,9 @@ require __DIR__ . '/includes/header.php';
                 <span class="badge <?= effective_status_badge_class($c) ?>"><?= effective_status_label($c) ?></span>
             </td>
             <td data-label="Kündbar">
-                <?php if (!empty($c['cancelled_at'])): ?>
-                    <span class="text-secondary">–</span>
-                <?php elseif ($d['days_left'] !== null):
-                    $daysLeft = $d['days_left'];
-                    $badgeClass = 'badge-' . $c['urgency'];
-                    if ($c['urgency'] === 'expired') { $txt = 'Frist verpasst'; }
-                    else { $txt = format_date_de($d['cancel_deadline']->format('Y-m-d')); }
-                ?>
-                    <span class="badge <?= $badgeClass ?>"><?= $txt ?></span>
+                <?php $term = termination_badge($c); ?>
+                <?php if ($term['class'] !== ''): ?>
+                    <span class="badge <?= e($term['class']) ?>"><?= e($term['text']) ?></span>
                 <?php else: ?>
                     <span class="text-secondary">–</span>
                 <?php endif; ?>

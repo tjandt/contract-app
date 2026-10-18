@@ -11,10 +11,11 @@
  */
 
 // ---- Datenbank ----
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'vertraege');
-define('DB_USER', 'DEIN_DB_USER');
-define('DB_PASS', 'DEIN_DB_PASSWORT');
+// Umgebungsvariablen (VERTRAEGE_DB_*) haben Vorrang – praktisch für Tests/CI, ohne diese Datei anzufassen.
+define('DB_HOST', getenv('VERTRAEGE_DB_HOST') ?: 'localhost');
+define('DB_NAME', getenv('VERTRAEGE_DB_NAME') ?: 'vertraege');
+define('DB_USER', getenv('VERTRAEGE_DB_USER') ?: 'DEIN_DB_USER');
+define('DB_PASS', getenv('VERTRAEGE_DB_PASS') ?: 'DEIN_DB_PASSWORT');
 define('DB_CHARSET', 'utf8mb4');
 
 // ---- Login ----
@@ -29,25 +30,14 @@ date_default_timezone_set('Europe/Berlin');
 define('REMINDER_WARN_DAYS', 90);   // ab wann ein Vertrag als "bald kündbar" markiert wird
 define('REMINDER_URGENT_DAYS', 30); // ab wann er als "dringend" markiert wird
 
-// ------------------------------------------------------------
-// PDO-Verbindung
-// ------------------------------------------------------------
-function get_pdo(): PDO
-{
-    static $pdo = null;
-    if ($pdo === null) {
-        $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET;
-        $options = [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES   => false,
-        ];
-        try {
-            $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-        } catch (PDOException $e) {
-            http_response_code(500);
-            die('Datenbankverbindung fehlgeschlagen. Bitte config.php prüfen. (' . htmlspecialchars($e->getMessage()) . ')');
-        }
-    }
-    return $pdo;
-}
+// Preiserhöhungen der letzten X Tage werden mit dem Hinweis auf ein mögliches Sonderkündigungsrecht markiert
+define('PRICE_INCREASE_FLAG_DAYS', 90);
+
+// Eine eingereichte Kündigung ohne Bestätigung wird nach X Tagen als Reminder angezeigt
+define('CANCELLATION_CONFIRMATION_DAYS', 14);
+
+// ---- Dokumente (PDF-Verträge, Kündigungsbestätigungen, …) ----
+// Idealerweise ein Verzeichnis AUSSERHALB des Webroots (z. B. '/var/www/vertraege-storage').
+// Standard: ./storage/documents (per .htaccess gesperrt, Auslieferung nur über document_download.php).
+define('DOCUMENT_DIR', __DIR__ . '/storage/documents');
+define('DOCUMENT_MAX_BYTES', 10 * 1024 * 1024); // 10 MB je Datei

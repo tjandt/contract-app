@@ -1,0 +1,12 @@
+# Schützt interne Dateien vor direktem Abruf (Apache 2.4; Fallback 2.2)
+Options -Indexes
+
+<FilesMatch "^(db\.sql|README\.md|\.gitignore)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>

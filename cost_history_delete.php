@@ -1,20 +1,28 @@
 <?php
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/bootstrap.php';
 require_login();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: contracts.php');
-    exit;
+    redirect('contracts.php');
 }
+csrf_verify();
 
 $pdo = get_pdo();
 
 $historyId  = (int) ($_POST['history_id'] ?? 0);
 $contractId = (int) ($_POST['contract_id'] ?? 0);
 
-$stmt = $pdo->prepare("DELETE FROM cost_history WHERE id = ? AND contract_id = ?");
-$stmt->execute([$historyId, $contractId]);
+$count = $pdo->prepare("SELECT COUNT(*) FROM cost_history WHERE contract_id = ?");
+$count->execute([$contractId]);
+if ((int) $count->fetchColumn() <= 1) {
+    flash('error', 'Der letzte Eintrag der Kostenhistorie kann nicht gelöscht werden – sonst fehlt der Vertrag in allen Auswertungen.');
+    redirect('contract_view.php?id=' . $contractId);
+}
 
-header('Location: contract_view.php?id=' . $contractId . '&saved=1');
-exit;
+$pdo->prepare("DELETE FROM cost_history WHERE id = ? AND contract_id = ?")->execute([$historyId, $contractId]);
+
+// current_cost folgt der Historie
+sync_current_costs($pdo, $contractId);
+
+flash('success', 'Eintrag gelöscht.');
+redirect('contract_view.php?id=' . $contractId);

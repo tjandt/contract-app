@@ -35,7 +35,7 @@
     async function showBreakdown(kind, key, label) {
         if (!breakdownEl) return;
         breakdownEl.hidden = false;
-        breakdownTitleEl.textContent = (kind === 'month' ? 'Kosten im ' : 'Kosten im Jahr ') + label;
+        breakdownTitleEl.textContent = (kind === 'month' ? 'Kosten im ' : 'Kosten ') + label;
         breakdownListEl.innerHTML = '<div class="month-breakdown-loading">Lädt…</div>';
         breakdownTotalEl.textContent = '';
 
@@ -117,8 +117,8 @@
                         const label = data.monthly.labels[idx];
                         if (ym) showBreakdown('month', ym, label);
                     } else {
-                        const year = data.yearly.labels[idx];
-                        if (year) showBreakdown('year', year, year);
+                        const year = data.yearly.keys[idx];
+                        if (year) showBreakdown('year', year, data.yearly.labels[idx]);
                     }
                 },
                 onHover: (evt, elements) => {
@@ -144,6 +144,7 @@
                         border: { display: false },
                     },
                     y: {
+                        beginAtZero: true,
                         grid: { color: gridColor },
                         border: { display: false },
                         ticks: { callback: (v) => euro(v) }

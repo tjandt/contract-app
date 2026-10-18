@@ -358,6 +358,7 @@ textarea { resize: vertical; min-height: 80px; }
 .reminder-item:hover { background: var(--border); }
 .reminder-item .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .reminder-item .info { flex: 1; min-width: 0; }
+.reminder-item .info .name, .reminder-item .info .sub { display: block; }
 .reminder-item .info .name { font-weight: 590; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .reminder-item .info .sub { font-size: 12.5px; color: var(--text-secondary); }
 .empty-state { text-align: center; padding: 30px 10px; color: var(--text-tertiary); font-size: 14px; }
@@ -588,6 +589,44 @@ td.actions { text-align: right; white-space: nowrap; }
 .text-secondary { color: var(--text-secondary); }
 .mt-24 { margin-top: 24px; }
 .flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+/* ---------------- Ergänzungen: Formulare, Hinweise, Zahlungskalender ---------------- */
+
+.inline-form { display: inline; margin: 0; }
+button.icon-btn { border: none; background: none; cursor: pointer; padding: 0; font-family: inherit; }
+
+.input-group { display: flex; gap: 8px; }
+.input-group > input { flex: 1; min-width: 0; }
+.input-group > select { flex: 0 0 auto; width: auto; }
+.upload-form { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.cat-row { display: flex; align-items: center; gap: 10px; }
+input[type="color"] { width: 56px; height: 38px; padding: 2px; cursor: pointer; }
+
+.alert-warn { background: rgba(255,159,10,0.14); color: #b8720a; }
+@media (prefers-color-scheme: dark) { .alert-warn { color: #ffb84d; } }
+.alert-card { border: 1px solid rgba(255,159,10,0.4); }
+
+.pager { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.pay-bars { display: flex; align-items: flex-end; gap: 6px; height: 190px; margin-top: 16px; }
+.pay-bar {
+    flex: 1; min-width: 0; height: 100%;
+    display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px;
+    border-radius: var(--radius-sm);
+}
+.pay-bar:hover { background: var(--surface-2); }
+.pay-bar-value { font-size: 11px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.pay-bar-fill { width: 100%; max-width: 38px; background: var(--accent); border-radius: 6px 6px 2px 2px; opacity: 0.85; min-height: 2px; }
+.pay-bar-fill.high { background: var(--orange); opacity: 1; }
+.pay-bar-label { font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
+.pay-row { text-decoration: none; color: inherit; }
+.pay-row:hover { background: var(--surface-2); }
+.pay-date { flex: 0 0 82px; font-size: 13px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+/* Sichtbarer Tastaturfokus für Links und Buttons */
+a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px;
+}
 
 /* ---------------- Responsive ---------------- */
 

@@ -1,7 +1,5 @@
 <?php
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/bootstrap.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -22,7 +20,8 @@ $pdo = get_pdo();
 $breakdown = get_year_breakdown($pdo, $year);
 
 echo json_encode([
-    'year'  => $year,
-    'total' => $breakdown['total'],
+    'year'   => $year,
+    'months' => $breakdown['months'],
+    'total'  => $breakdown['total'],
     'items' => $breakdown['items'],
 ], JSON_UNESCAPED_UNICODE);
